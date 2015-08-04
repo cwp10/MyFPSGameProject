@@ -13,6 +13,10 @@ public class NetworkWeapon : NetworkBehaviour {
 	public GameObject wallParticlePrefab;
 	public GameObject playerParticlePrefab;
 
+    public Transform firePos;
+    public ParticleSystem muzzleParticle;
+    public GameObject bulletPrefab;
+
 
 	public float weaponRate = 0.2f;
 	public float damage = 20.0f;
@@ -33,7 +37,13 @@ public class NetworkWeapon : NetworkBehaviour {
 
 			if(fireRate >= weaponRate) {
 
-				var ray = new Ray(firstPersonCharacter.position, firstPersonCharacter.forward);
+                //CmdInvokeBullet();
+                muzzleParticle.Stop();
+                muzzleParticle.Play();
+
+                Instantiate(bulletPrefab, firePos.position, firePos.rotation);
+
+                var ray = new Ray(firstPersonCharacter.position, firstPersonCharacter.forward);
 				var hit = new RaycastHit();
 				
 				if(Physics.Raycast(ray, out hit, maxBulletDist)) {
@@ -72,7 +82,17 @@ public class NetworkWeapon : NetworkBehaviour {
 		healthScript.TakeDamage(damage);
 	}
 
-	[Command(channel = 1)]
+    [Command(channel = 1)]
+    private void CmdInvokeBullet() {
+        RpcInvokeBullet();
+    }
+
+    [ClientRpc(channel = 1)]
+    private void RpcInvokeBullet() {
+        ShowBullet();
+    }
+
+    [Command(channel = 1)]
 	private void CmdInvokeParticle(string tag, Vector3 pos, Vector3 normal) {
 		RpcInvokeParticle(tag, pos, normal);
 	}
@@ -101,4 +121,11 @@ public class NetworkWeapon : NetworkBehaviour {
 		var particles = Instantiate(prefab, pos, Quaternion.LookRotation(normal));
 		Destroy(particles, time);
 	}
+
+    public void ShowBullet() {
+        muzzleParticle.Stop();
+        muzzleParticle.Play();
+
+        Instantiate(bulletPrefab, firePos.position, firePos.rotation);
+    }
 }

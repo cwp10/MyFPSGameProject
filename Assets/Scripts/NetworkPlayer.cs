@@ -32,7 +32,11 @@ public class NetworkPlayer : NetworkBehaviour {
 			firstPerson.SetActive(true);
 			thirdPerson.SetActive(false);
 			anim = firstPerson.GetComponent<Animator>();
-		} else {
+
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+
+        } else {
 			firstPerson.SetActive(false);
 			thirdPerson.SetActive(true);
 			anim = thirdPerson.GetComponent<Animator>();
@@ -42,8 +46,8 @@ public class NetworkPlayer : NetworkBehaviour {
 		GetComponent<FirstPersonController>().enabled = isLocalPlayer;
 
 		firstPersonCharacter.GetComponent<AudioListener>().enabled = isLocalPlayer;
-		firstPersonCharacter.GetComponent<Camera>().enabled = isLocalPlayer;
-	}
+        firstPersonCharacter.GetComponent<Camera>().enabled = isLocalPlayer;
+    }
 
 	public void PlayerDead() {
 
@@ -56,7 +60,13 @@ public class NetworkPlayer : NetworkBehaviour {
 		GetComponent<FirstPersonController>().enabled = false;
 		GetComponent<NetworkWeapon>().enabled = false;
 		GetComponent<NetworkMovement>().enabled = false;
-		Invoke("Respawn", 5.0f);
+
+        if (isLocalPlayer) {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+      
+        Invoke("Respawn", 5.0f);
 	}
 
 	void Respawn() {
@@ -66,6 +76,13 @@ public class NetworkPlayer : NetworkBehaviour {
 		GetComponent<FirstPersonController>().enabled = isLocalPlayer;
 		GetComponent<NetworkWeapon>().enabled = true;
 		GetComponent<NetworkMovement>().enabled = true;
-		eventResetPlayer();
+
+        if (isLocalPlayer)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        eventResetPlayer();
 	}
 }
