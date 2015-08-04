@@ -12,6 +12,7 @@ public class NetworkWeapon : NetworkBehaviour {
 	public Transform firstPersonCharacter;
 	public GameObject wallParticlePrefab;
 	public GameObject playerParticlePrefab;
+	public Camera weaponCam;
 
     public Transform firePos;
     public ParticleSystem muzzleParticle;
@@ -20,13 +21,18 @@ public class NetworkWeapon : NetworkBehaviour {
 
 	public float weaponRate = 0.2f;
 	public float damage = 20.0f;
-
+	
 	private float fireRate;
 	private NetworkPlayer netPlayer;
+	private int weaponIndex = 0;
+
+	public delegate void OnWeaponChange(int index);
+	public event OnWeaponChange eventWeaponChange;
 	
 	void Start() {
 		
 		netPlayer = GetComponent<NetworkPlayer>();
+		weaponCam = firstPersonCharacter.FindChild("WeaponCam").GetComponent<Camera>();
 	}
 	
 	[ClientCallback]
@@ -37,11 +43,7 @@ public class NetworkWeapon : NetworkBehaviour {
 
 			if(fireRate >= weaponRate) {
 
-                //CmdInvokeBullet();
-                muzzleParticle.Stop();
-                muzzleParticle.Play();
-
-                Instantiate(bulletPrefab, firePos.position, firePos.rotation);
+                CmdInvokeBullet();
 
                 var ray = new Ray(firstPersonCharacter.position, firstPersonCharacter.forward);
 				var hit = new RaycastHit();
@@ -65,9 +67,44 @@ public class NetworkWeapon : NetworkBehaviour {
 			}
 		}
 
+
+		if(Input.GetKeyDown(KeyCode.Alpha1) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+			ZoomMode(false);
+			weaponIndex = 0;
+			CmdWeaponChange(weaponIndex);
+			fireRate = 0.0f;
+		}
+
+		if(Input.GetKeyDown(KeyCode.Alpha2) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+			ZoomMode(false);
+			weaponIndex = 3;
+			CmdWeaponChange(weaponIndex);
+			fireRate = 0.0f;
+		}
+
+		if(Input.GetKeyDown(KeyCode.Alpha3) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+			ZoomMode(false);
+			weaponIndex = 6;
+			CmdWeaponChange(weaponIndex);
+			fireRate = 0.0f;
+		}
+
+
+
 		if(Input.GetKeyDown(KeyCode.R) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
 			netPlayer.anim.SetTrigger("Reload");
 			fireRate = 0.0f;
+		}
+
+		if(Input.GetButtonDown("Fire2") && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+
+			if(weaponIndex == 5 || weaponIndex == 6) {
+				ZoomMode(true);
+			}
+		}
+
+		if(Input.GetButtonUp("Fire2") && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+			ZoomMode(false);
 		}
 	}
 
@@ -89,10 +126,18 @@ public class NetworkWeapon : NetworkBehaviour {
 
     [ClientRpc(channel = 1)]
     private void RpcInvokeBullet() {
-        ShowBullet();
-    }
 
-    [Command(channel = 1)]
+		if(muzzleParticle != null) {
+			muzzleParticle.Stop();
+			muzzleParticle.Play();
+		}
+		
+		if(firePos != null) {
+			Instantiate(bulletPrefab, firePos.position, firePos.rotation);
+		}
+	}
+	
+	[Command(channel = 1)]
 	private void CmdInvokeParticle(string tag, Vector3 pos, Vector3 normal) {
 		RpcInvokeParticle(tag, pos, normal);
 	}
@@ -117,15 +162,34 @@ public class NetworkWeapon : NetworkBehaviour {
 		ShowParticles(prefab, pos, normal, time);
 	}
 
+	[Command(channel = 1)]
+	private void CmdWeaponChange(int idx) {
+		RpcWeaponChange(idx);
+	}
+
+	[ClientRpc(channel = 1)]
+	private void RpcWeaponChange(int idx) {
+		netPlayer.anim.SetInteger("WeaponType", idx);
+		eventWeaponChange(idx);
+	}
+
 	public void ShowParticles(GameObject prefab, Vector3 pos, Vector3 normal, float time) {
 		var particles = Instantiate(prefab, pos, Quaternion.LookRotation(normal));
 		Destroy(particles, time);
 	}
 
-    public void ShowBullet() {
-        muzzleParticle.Stop();
-        muzzleParticle.Play();
+	void ZoomMode(bool isZoom) {
 
-        Instantiate(bulletPrefab, firePos.position, firePos.rotation);
-    }
+		if(isZoom) {
+			if(weaponIndex == 5 || weaponIndex == 6) {
+				firstPersonCharacter.GetComponent<Camera>().fieldOfView = 20.0f;
+				weaponCam.enabled = false;
+				GameManager.Instance.zoomCrossHair.color = Color.white;
+			}
+		} else {
+			firstPersonCharacter.GetComponent<Camera>().fieldOfView = 60.0f;
+			weaponCam.enabled = true;
+			GameManager.Instance.zoomCrossHair.color = Color.clear;
+		}
+	} 
 }

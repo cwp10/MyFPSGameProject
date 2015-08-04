@@ -65,7 +65,6 @@ public class NetworkMovement : NetworkBehaviour {
 		Vector3 movement = newPos - this.transform.position; 
 		netPlayer.characterController.Move(movement);
 
-
 		if(Mathf.Abs(movement.normalized.magnitude) > 0.1f) {
 			netPlayer.anim.SetFloat("Speed", 1.0f);
 		} else {

@@ -9,7 +9,7 @@ public class Bullet : MonoBehaviour {
 	void Start () {
         Rigidbody rigidbody = GetComponent<Rigidbody>();
         rigidbody.AddRelativeForce(Vector3.forward * speed);
-        Destroy(this.gameObject, 2.0f);
+        Destroy(this.gameObject, 0.1f);
     }
 
     void OnTriggerEnter(Collider other) {

@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour {
     public static GameManager Instance { get { return instance; } }
 
     public Image takeDamageImage;
+	public Image zoomCrossHair;
 
     void Awake() {
         if (instance == null)
