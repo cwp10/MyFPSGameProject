@@ -26,8 +26,48 @@ public class ObjectShake : MonoBehaviour {
 		ShakeStop();
 		StartCoroutine(this.PlayShake(delay, duration, _magnitude));
 	}
-	
-	IEnumerator PlayShake(float _delayTime, float _duration, float _magnitude)
+
+    public void MomentShake(float xPos, float yPos)
+    {
+        ShakeStop();
+        StartCoroutine(this.PlayMomentShake(xPos, yPos));
+    }
+
+    IEnumerator PlayMomentShake(float xPos, float yPos)
+    {
+        isShaking = true;
+        originPosition = tr.localPosition;
+
+        float elapsed = 0.0f;
+        float duration = 0.2f;
+
+        originPosition = tr.localPosition;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float percentComplete = elapsed / duration;
+            float damper = 1.0f - Mathf.Clamp(4.0f * percentComplete - 3.0f, 0.0f, 1.0f);
+            // map noise to [-1, 1]
+            float x = Random.value * xPos - 1.0f;
+            float y = Random.value * yPos - 1.0f;
+
+            x *= 0.1f * damper;
+            y *= 0.1f * damper;
+
+            Vector3 newPos = new Vector3(originPosition.x + x, originPosition.y + y, originPosition.z);
+            tr.localPosition = newPos;
+
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(duration);
+
+        tr.localPosition = originPosition;
+        isShaking = false;
+    }
+
+    IEnumerator PlayShake(float _delayTime, float _duration, float _magnitude)
 	{
 		isShaking = true;
 		originPosition = tr.localPosition;

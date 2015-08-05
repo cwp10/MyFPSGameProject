@@ -18,11 +18,16 @@ public class WeaponContainer : MonoBehaviour {
 
 		netWeapon.firePos = null;
 		netWeapon.muzzleParticle = null;
-		
-		for(int i = 0; i < weapons.Length; ++i) {
+        netWeapon.weaponRate = 2.0f;
+        netWeapon.damage = 0.0f;
+
+        for (int i = 0; i < weapons.Length; ++i) {
 			if(index == i) {
 				weapons[i].gameObject.SetActive(true);
-				if(weapons[i].firePos != null) {
+                netWeapon.weaponRate = weapons[i].weaponRate;
+                netWeapon.damage = weapons[i].damage;
+
+                if (weapons[i].firePos != null) {
 					netWeapon.firePos = weapons[i].firePos;
 				}
 				if(weapons[i].muzzleParticle != null) {

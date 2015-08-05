@@ -19,7 +19,7 @@ public class NetworkWeapon : NetworkBehaviour {
     public GameObject bulletPrefab;
 
 
-	public float weaponRate = 0.2f;
+	public float weaponRate = 0.5f;
 	public float damage = 20.0f;
 	
 	private float fireRate;
@@ -38,11 +38,17 @@ public class NetworkWeapon : NetworkBehaviour {
 	[ClientCallback]
 	void Update() {
 
-		if(Input.GetButton("Fire1") && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
-			fireRate += Time.deltaTime;
+        fireRate -= Time.deltaTime;
 
-			if(fireRate >= weaponRate) {
+        if (Input.GetButton("Fire1") && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+			
+			if(fireRate <= 0) {
 
+                bool isExplosion = false;
+
+                if (weaponIndex == 4 || weaponIndex == 7) {
+                    isExplosion = true;
+                }
                 CmdInvokeBullet();
 
                 var ray = new Ray(firstPersonCharacter.position, firstPersonCharacter.forward);
@@ -50,21 +56,35 @@ public class NetworkWeapon : NetworkBehaviour {
 				
 				if(Physics.Raycast(ray, out hit, maxBulletDist)) {
 					var tag = hit.transform.tag;
-					
-					switch(tag) {
-					case "Player":
-						CmdInvokeParticle(tag, hit.point, hit.normal);
-						NetworkInstanceId id = hit.transform.GetComponent<NetworkIdentity>().netId;
-						CmdShoot(id);
-						break;
-					default:
-						CmdInvokeParticle(tag, hit.point, hit.normal);
-						break;
-					}
+                    NetworkInstanceId id;
+                    switch (tag) {
+					    case "Player":
+                            CmdInvokeParticle(tag, hit.point, hit.normal);
+                            id = hit.transform.GetComponent<NetworkIdentity>().netId;
+
+                            if (id != netPlayer.GetComponent<NetworkIdentity>().netId) {
+                                CmdShoot(id);
+                            }
+                            break;
+                        case "Zombie":
+                            CmdInvokeParticle(tag, hit.point, hit.normal);
+                            id = hit.transform.GetComponent<NetworkIdentity>().netId;
+
+                            if (id != netPlayer.GetComponent<NetworkIdentity>().netId)
+                            {
+                                CmdZombieShoot(id, netPlayer.GetComponent<NetworkIdentity>().netId, isExplosion);
+                            }
+                            break;
+
+                        default:
+                            CmdInvokeParticle(tag, hit.point, hit.normal);
+                            break;
+
+                    }
 				}
 				netPlayer.anim.SetTrigger("Shoot");
-				fireRate = 0.0f;
-			}
+                fireRate = weaponRate;
+            }
 		}
 
 
@@ -72,38 +92,46 @@ public class NetworkWeapon : NetworkBehaviour {
 			ZoomMode(false);
 			weaponIndex = 0;
 			CmdWeaponChange(weaponIndex);
-			fireRate = 0.0f;
+			fireRate = 0.5f;
 		}
 
-		if(Input.GetKeyDown(KeyCode.Alpha2) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+        if (Input.GetKeyDown(KeyCode.Alpha2) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f)
+        {
+            ZoomMode(false);
+            weaponIndex = 4;
+            CmdWeaponChange(weaponIndex);
+            fireRate = 0.5f;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha3) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
 			ZoomMode(false);
 			weaponIndex = 3;
 			CmdWeaponChange(weaponIndex);
-			fireRate = 0.0f;
+			fireRate = 0.5f;
 		}
 
-		if(Input.GetKeyDown(KeyCode.Alpha3) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+		if(Input.GetKeyDown(KeyCode.Alpha4) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
 			ZoomMode(false);
-			weaponIndex = 6;
+			weaponIndex = 5;
 			CmdWeaponChange(weaponIndex);
-			fireRate = 0.0f;
-		}
+            fireRate = 0.5f;
+        }
 
 
 
 		if(Input.GetKeyDown(KeyCode.R) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
 			netPlayer.anim.SetTrigger("Reload");
-			fireRate = 0.0f;
-		}
+            fireRate = 0.0f;
+        }
 
-		if(Input.GetButtonDown("Fire2") && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+		if(Input.GetButton("Fire2") && isLocalPlayer) {
 
 			if(weaponIndex == 5 || weaponIndex == 6) {
 				ZoomMode(true);
 			}
 		}
 
-		if(Input.GetButtonUp("Fire2") && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+		if(Input.GetButtonUp("Fire2") && isLocalPlayer) {
 			ZoomMode(false);
 		}
 	}
@@ -118,6 +146,19 @@ public class NetworkWeapon : NetworkBehaviour {
 		} 
 		healthScript.TakeDamage(damage);
 	}
+
+    [Command(channel = 1)]
+    private void CmdZombieShoot(NetworkInstanceId id, NetworkInstanceId playerId, bool explosion)
+    {
+        GameObject zombie = NetworkServer.FindLocalObject(id);
+        var healthScript = zombie.GetComponent<NetworkZombieHealth>();
+        if (healthScript == null)
+        {
+            Debug.LogError("no healthScripts attached to player");
+            return;
+        }
+        healthScript.TakeDamage(damage, playerId, explosion);
+    }
 
     [Command(channel = 1)]
     private void CmdInvokeBullet() {
@@ -149,14 +190,18 @@ public class NetworkWeapon : NetworkBehaviour {
 		float time;
 
 		switch(tag) {
-		case "Player":
-			prefab = playerParticlePrefab;
-			time = bloodParticleTime;
-			break;
-		default:
-			prefab = wallParticlePrefab;
-			time = wallParticleTime;
-			break;
+		    case "Player":
+			    prefab = playerParticlePrefab;
+			    time = bloodParticleTime;
+			    break;
+            case "Zombie":
+                prefab = playerParticlePrefab;
+                time = bloodParticleTime;
+                break;
+            default:
+			    prefab = wallParticlePrefab;
+			    time = wallParticleTime;
+			    break;
 		}
 
 		ShowParticles(prefab, pos, normal, time);
