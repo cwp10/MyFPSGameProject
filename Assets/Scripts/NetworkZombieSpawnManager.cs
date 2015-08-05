@@ -48,7 +48,6 @@ public class NetworkZombieSpawnManager : NetworkBehaviour
 
     void SpawnZombies(Vector3 spawnPos)
     {
-
         counter++;
         GameObject go = GameObject.Instantiate(zombiePrafab, spawnPos, Quaternion.identity) as GameObject;
         go.GetComponent<NetworkZombieID>().zombieID = "Zombie" + counter;

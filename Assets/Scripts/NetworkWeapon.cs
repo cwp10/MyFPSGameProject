@@ -16,7 +16,7 @@ public class NetworkWeapon : NetworkBehaviour {
     public Transform firePos;
     public ParticleSystem muzzleParticle;
     public GameObject bulletPrefab;
-
+	public GameObject grenadePrefab;
 
 	public float weaponRate = 0.5f;
 	public float damage = 20.0f;
@@ -60,10 +60,15 @@ public class NetworkWeapon : NetworkBehaviour {
 
                 bool isExplosion = false;
 
-                if (weaponIndex == 4 || weaponIndex == 7) {
+				if (weaponIndex == 4 || weaponIndex == 7 || weaponIndex == 8) {
                     isExplosion = true;
                 }
-                CmdInvokeBullet();
+
+				if(weaponIndex == 8) {
+					CmdInvokeBomb(firePos.position, firePos.rotation);
+				} else {
+					CmdInvokeBullet();
+				}
 
                 var ray = new Ray(firstPersonCharacter.position, firstPersonCharacter.forward);
 				var hit = new RaycastHit();
@@ -98,6 +103,19 @@ public class NetworkWeapon : NetworkBehaviour {
 				}
 				netPlayer.anim.SetTrigger("Shoot");
                 fireRate = weaponRate;
+
+				if (currentBullet <= 0 && weaponIndex == 8) {
+					if(totalBullet > 0) {
+						currentBullet = totalBullet;
+						totalBullet = 0;
+						eventBulletCount(currentBullet, totalBullet);
+					} else {
+						ZoomMode(false);
+						weaponIndex = 0;
+						CmdWeaponChange(weaponIndex);
+						fireRate = 0.5f;
+					}
+				}
             }
 		}
 
@@ -131,7 +149,14 @@ public class NetworkWeapon : NetworkBehaviour {
             fireRate = 0.5f;
         }
 
-		if(Input.GetKeyDown(KeyCode.R) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+		if(Input.GetKeyDown(KeyCode.Alpha5) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
+			ZoomMode(false);
+			weaponIndex = 8;
+			CmdWeaponChange(weaponIndex);
+			fireRate = 0.5f;
+		}
+
+		if(Input.GetKeyDown(KeyCode.R) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f && weaponIndex != 8) {
 			netPlayer.anim.SetTrigger("Reload");
 
             if (totalBullet >= maxBullet) {
@@ -200,7 +225,27 @@ public class NetworkWeapon : NetworkBehaviour {
 			Instantiate(bulletPrefab, firePos.position, firePos.rotation);
 		}
 	}
-	
+	[Command(channel = 1)]
+	private void CmdInvokeBomb(Vector3 pos, Quaternion rot) {
+		//RpcInvokeBomb(pos, rot);
+
+		if(firePos != null) {
+			GameObject go = GameObject.Instantiate(grenadePrefab, pos, rot) as GameObject;
+			go.GetComponent<Grenade>().ownerId = netPlayer.GetComponent<NetworkIdentity>().netId;
+			go.GetComponent<Grenade>().damage = damage;
+			NetworkServer.Spawn(go);
+		}
+	}
+	/*
+	[ClientRpc(channel = 1)]
+	private void RpcInvokeBomb(Vector3 pos, Quaternion rot) {
+		
+		if(firePos != null) {
+			GameObject go = GameObject.Instantiate(grenadePrefab, pos, rot) as GameObject;
+			NetworkServer.Spawn(go);
+		}
+	}*/
+		
 	[Command(channel = 1)]
 	private void CmdInvokeParticle(string tag, Vector3 pos, Vector3 normal) {
 		RpcInvokeParticle(tag, pos, normal);
