@@ -5,7 +5,6 @@ using UnityEngine.Networking;
 [NetworkSettings (channel = 1)]
 public class NetworkWeapon : NetworkBehaviour {
 	
-	public float maxBulletDist = 100;
 	public float wallParticleTime = 2;
 	public float bloodParticleTime = 2;
 
@@ -21,19 +20,31 @@ public class NetworkWeapon : NetworkBehaviour {
 
 	public float weaponRate = 0.5f;
 	public float damage = 20.0f;
-	
-	private float fireRate;
+
+    public int totalBullet;
+    public int currentBullet;
+
+    public int maxBullet;
+    public float maxBulletDist = 25;
+
+    private float fireRate;
 	private NetworkPlayer netPlayer;
 	private int weaponIndex = 0;
 
 	public delegate void OnWeaponChange(int index);
 	public event OnWeaponChange eventWeaponChange;
-	
-	void Start() {
+
+    public delegate void OnBulletCount(int curB, int toB);
+    public event OnBulletCount eventBulletCount;
+
+    void Start() {
 		
 		netPlayer = GetComponent<NetworkPlayer>();
 		weaponCam = firstPersonCharacter.FindChild("WeaponCam").GetComponent<Camera>();
-	}
+
+        weaponIndex = 0;
+        CmdWeaponChange(weaponIndex);
+    }
 	
 	[ClientCallback]
 	void Update() {
@@ -42,7 +53,10 @@ public class NetworkWeapon : NetworkBehaviour {
 
         if (Input.GetButton("Fire1") && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
 			
-			if(fireRate <= 0) {
+			if(fireRate <= 0 && currentBullet > 0) {
+
+                currentBullet -= 1;
+                eventBulletCount(currentBullet, totalBullet);
 
                 bool isExplosion = false;
 
@@ -108,7 +122,7 @@ public class NetworkWeapon : NetworkBehaviour {
 			weaponIndex = 3;
 			CmdWeaponChange(weaponIndex);
 			fireRate = 0.5f;
-		}
+        }
 
 		if(Input.GetKeyDown(KeyCode.Alpha4) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
 			ZoomMode(false);
@@ -117,10 +131,19 @@ public class NetworkWeapon : NetworkBehaviour {
             fireRate = 0.5f;
         }
 
-
-
 		if(Input.GetKeyDown(KeyCode.R) && isLocalPlayer && netPlayer.anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.95f) {
 			netPlayer.anim.SetTrigger("Reload");
+
+            if (totalBullet >= maxBullet) {
+                currentBullet = maxBullet;
+                totalBullet -= maxBullet;
+            } else {
+                currentBullet = totalBullet;
+                totalBullet = 0;
+            }
+
+            eventBulletCount(currentBullet, totalBullet);
+
             fireRate = 0.0f;
         }
 
@@ -236,5 +259,12 @@ public class NetworkWeapon : NetworkBehaviour {
 			weaponCam.enabled = true;
 			GameManager.Instance.zoomCrossHair.color = Color.clear;
 		}
-	} 
+	}
+
+    public void SetMaxBullet() {
+        if (isLocalPlayer) {
+            GameManager.Instance.currnetBulletText.text = currentBullet.ToString() + "/";
+            GameManager.Instance.bulletText.text = totalBullet.ToString();
+        }
+    }
 }

@@ -9,6 +9,9 @@ public class GameManager : MonoBehaviour {
 
     public Image takeDamageImage;
 	public Image zoomCrossHair;
+    public Text currnetBulletText;
+    public Text bulletText;
+    public Text healthText;
 
     void Awake() {
         if (instance == null)

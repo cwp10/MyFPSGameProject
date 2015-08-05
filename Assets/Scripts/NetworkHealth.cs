@@ -31,7 +31,13 @@ public class NetworkHealth : NetworkBehaviour {
 
 	public void TakeDamage(float dmg) {
 		playerHealth -= dmg;
-		RpcUpdateHealth(playerHealth); 
+
+        if (playerHealth <= 0)
+        {
+            playerHealth = 0.0f;
+        }
+        GameManager.Instance.healthText.text = playerHealth.ToString();
+        RpcUpdateHealth(playerHealth);
     }
 
 	[ClientRpc(channel = 1)]
