@@ -37,6 +37,9 @@ public class NetworkWeapon : NetworkBehaviour {
     public delegate void OnBulletCount(int curB, int toB);
     public event OnBulletCount eventBulletCount;
 
+    public delegate void OnAddBulletCount(int index, int toB);
+    public event OnAddBulletCount eventAddBulletCount;
+
     void Start() {
 		
 		netPlayer = GetComponent<NetworkPlayer>();
@@ -182,7 +185,16 @@ public class NetworkWeapon : NetworkBehaviour {
 		if(Input.GetButtonUp("Fire2") && isLocalPlayer) {
 			ZoomMode(false);
 		}
-	}
+
+        if (Input.GetKeyDown(KeyCode.Alpha9) && isLocalPlayer)
+        {
+            eventAddBulletCount(0, 25);
+            eventAddBulletCount(3, 30);
+            eventAddBulletCount(4, 6);
+            eventAddBulletCount(5, 6);
+            eventAddBulletCount(8, 6 );
+        }
+    }
 
 	[Command(channel = 1)]
 	private void CmdShoot(NetworkInstanceId id) {

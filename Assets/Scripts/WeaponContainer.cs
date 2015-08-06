@@ -11,11 +11,13 @@ public class WeaponContainer : MonoBehaviour {
 	void OnEnable() {
 		netWeapon.eventWeaponChange += SetWeapon;
         netWeapon.eventBulletCount += CurrentWeaponBullet;
+        netWeapon.eventAddBulletCount += SetWeaponAddBullet;
     }
 
 	void OnDisable() {
 		netWeapon.eventWeaponChange -= SetWeapon;
         netWeapon.eventBulletCount -= CurrentWeaponBullet;
+        netWeapon.eventAddBulletCount -= SetWeaponAddBullet;
     }
 	
 	public void SetWeapon(int index) {
@@ -65,6 +67,12 @@ public class WeaponContainer : MonoBehaviour {
     public void CurrentWeaponBullet(int curB, int toB) {
         weapons[currentWeaponIndex].currentBullet = curB;
         weapons[currentWeaponIndex].totalBullet = toB;
+        netWeapon.SetMaxBullet();
+    }
+
+    public void SetWeaponAddBullet(int index, int toB)
+    {
+        weapons[index].totalBullet += toB;
         netWeapon.SetMaxBullet();
     }
 }

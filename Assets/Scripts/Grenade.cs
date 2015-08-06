@@ -4,7 +4,7 @@ using UnityEngine.Networking;
 
 public class Grenade : NetworkBehaviour {
 
-	private float speed = 800.0f;
+	private float speed = 1500.0f;
 	public NetworkInstanceId ownerId;
 	public float damage;
 	public GameObject explosionParticle;
