@@ -56,7 +56,7 @@ public class NetworkPlayer : NetworkBehaviour {
         weaponCam.SetActive(isLocalPlayer);
     }
 
-	public void PlayerDead() {
+	public void PlayerDead(bool isExplosion) {
 
 		if(isDead)
 			return;
@@ -74,11 +74,22 @@ public class NetworkPlayer : NetworkBehaviour {
             Cursor.visible = true;
         }
 
-        Invoke("RespawnReady", 3.0f);
-        Invoke("Respawn", 5.0f);
+        if (isExplosion) {
+            CmdVisiblePlayer(false);
+        }
+        Invoke("RespawnReady", 2.0f);
+        Invoke("Respawn", 6.0f);
 	}
 
-    void VisiblePlayer(bool isVisible) {
+    [Command(channel = 1)]
+    private void CmdVisiblePlayer(bool isVisible)
+    {
+        RpcVisiblePlayer(isVisible);
+    }
+
+    [ClientRpc(channel = 1)]
+    private void RpcVisiblePlayer(bool isVisible)
+    {
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
         foreach (Renderer ren in renderers)
         {
@@ -87,7 +98,7 @@ public class NetworkPlayer : NetworkBehaviour {
     }
 
 	void RespawnReady() {
-        VisiblePlayer(false);
+        CmdVisiblePlayer(false);
         
         characterController.enabled = true;
         GetComponent<FirstPersonController>().enabled = isLocalPlayer;
@@ -108,7 +119,7 @@ public class NetworkPlayer : NetworkBehaviour {
             Cursor.visible = false;
         }
         anim.SetBool("IsDead", isDead);
-        VisiblePlayer(true);
+        CmdVisiblePlayer(true);
         eventResetPlayer();
     }
 }

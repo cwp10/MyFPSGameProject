@@ -9,8 +9,8 @@ public class NetworkZombieSpawnManager : NetworkBehaviour
     private GameObject[] zombieSpawns;
 
     private int counter;
-    private int numberOfZombies = 5;
-    private int maxNumberOfZombies = 20;
+    private int numberOfZombies = 15;
+    private int maxNumberOfZombies = 60;
     private float waveRate = 10;
     private bool isSpawnActivated = true;
 

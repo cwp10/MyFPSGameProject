@@ -4,19 +4,13 @@ using UnityEngine.Networking;
 
 public class NetworkZombieAttack : NetworkBehaviour {
 
-    private float attackRate = 3;
+    private float attackRate = 1;
     private float nextAttack;
     private int damage = 10;
-    private float minDistance = 2;
+    private float minDistance = 2.5f;
     private float currnetDistance;
     private Transform myTransform;
     private NetworkZombieTarget targetScript;
-
-    /*
-    [SerializeField]
-    private Material zombieGreen;
-    [SerializeField]
-    private Material zombieRed;*/
 
     void Start()
     {
@@ -39,26 +33,10 @@ public class NetworkZombieAttack : NetworkBehaviour {
             {
                 nextAttack = Time.time + attackRate;
 
-                targetScript.targetTransform.GetComponent<NetworkHealth>().TakeDamage(damage);
-                //StartCoroutine(ChangeZombieMat());
-                //RpcChangZombieAppearance();
+                targetScript.targetTransform.GetComponent<NetworkHealth>().TakeDamage(damage, false);
             }
         }
     }
-
-    /*
-    IEnumerator ChangeZombieMat()
-    {
-        GetComponent<Renderer>().material = zombieRed;
-        yield return new WaitForSeconds(attackRate / 2);
-        GetComponent<Renderer>().material = zombieGreen;
-    }
-
-    [ClientRpc]
-    void RpcChangZombieAppearance()
-    {
-        StartCoroutine(ChangeZombieMat());
-    }*/
 
     IEnumerator Attack()
     {

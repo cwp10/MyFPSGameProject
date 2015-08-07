@@ -8,7 +8,7 @@ public class NetworkZombieTarget : NetworkBehaviour {
     private Transform myTransform;
     public Transform targetTransform;
     private LayerMask raycastLayer;
-    private float radius = 20;
+    private float radius = 50;
     private float searchRate = 2.0f;
 
     void Start()

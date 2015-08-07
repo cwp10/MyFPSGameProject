@@ -42,7 +42,7 @@ public class Grenade : NetworkBehaviour {
 					var tag = hit.transform.tag;
 					NetworkInstanceId id;
 					id = hit.transform.GetComponent<NetworkIdentity>().netId;
-					CmdShoot(id);
+					CmdShoot(id, true);
 				}
 
 				if(hit.collider.gameObject.layer == 9) {
@@ -75,14 +75,14 @@ public class Grenade : NetworkBehaviour {
 	}
 
 	[Command(channel = 1)]
-	private void CmdShoot(NetworkInstanceId id) {
+	private void CmdShoot(NetworkInstanceId id, bool explosion) {
 		GameObject player = NetworkServer.FindLocalObject(id);
 		var healthScript = player.GetComponent<NetworkHealth>();
 		if(healthScript == null) {
 			Debug.LogError("no healthScripts attached to player");
 			return;
 		} 
-		healthScript.TakeDamage(damage);
+		healthScript.TakeDamage(damage, explosion);
 	}
 
 	[Command(channel = 1)]

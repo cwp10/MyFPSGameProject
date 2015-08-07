@@ -29,7 +29,7 @@ public class NetworkHealth : NetworkBehaviour {
 		netPlayer.eventResetPlayer -= OnResetHealth;
 	}
 
-	public void TakeDamage(float dmg) {
+	public void TakeDamage(float dmg, bool isExplosion) {
 		playerHealth -= dmg;
 
         if (playerHealth <= 0)
@@ -37,15 +37,15 @@ public class NetworkHealth : NetworkBehaviour {
             playerHealth = 0.0f;
         }
         GameManager.Instance.healthText.text = playerHealth.ToString();
-        RpcUpdateHealth(playerHealth);
+        RpcUpdateHealth(playerHealth, isExplosion);
     }
 
 	[ClientRpc(channel = 1)]
-	private void RpcUpdateHealth(float health) {
+	private void RpcUpdateHealth(float health, bool isExplosion) {
 		playerHealth = health;
 
 		if(playerHealth <= 0.0f) {
-			netPlayer.PlayerDead();
+			netPlayer.PlayerDead(isExplosion);
 		}
 
         apcolor = 0.5f;

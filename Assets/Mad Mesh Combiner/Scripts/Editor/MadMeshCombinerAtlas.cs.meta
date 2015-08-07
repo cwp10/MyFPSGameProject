@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 71243baa725502e419fe6d3f7bf0c60f
+labels:
+- mesh
+- combine
+- merge
+- optimize
+- draw
+- call
+- mobile
+- calls
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

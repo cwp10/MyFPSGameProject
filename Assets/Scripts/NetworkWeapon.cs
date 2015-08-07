@@ -85,7 +85,7 @@ public class NetworkWeapon : NetworkBehaviour {
                             id = hit.transform.GetComponent<NetworkIdentity>().netId;
 
                             if (id != netPlayer.GetComponent<NetworkIdentity>().netId) {
-                                CmdShoot(id);
+                                CmdShoot(id, isExplosion);
                             }
                             break;
                         case "Zombie":
@@ -197,14 +197,14 @@ public class NetworkWeapon : NetworkBehaviour {
     }
 
 	[Command(channel = 1)]
-	private void CmdShoot(NetworkInstanceId id) {
+	private void CmdShoot(NetworkInstanceId id, bool explosion) {
 		GameObject player = NetworkServer.FindLocalObject(id);
 		var healthScript = player.GetComponent<NetworkHealth>();
 		if(healthScript == null) {
 			Debug.LogError("no healthScripts attached to player");
 			return;
 		} 
-		healthScript.TakeDamage(damage);
+		healthScript.TakeDamage(damage, explosion);
 	}
 
     [Command(channel = 1)]
